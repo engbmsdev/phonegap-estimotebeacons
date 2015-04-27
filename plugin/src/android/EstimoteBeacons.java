@@ -6,7 +6,6 @@ JavaDoc for Estimote Android API: https://estimote.github.io/Android-SDK/JavaDoc
 
 package com.evothings;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.estimote.sdk.*;
@@ -16,7 +15,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 
@@ -34,10 +32,8 @@ public class EstimoteBeacons extends CordovaPlugin
 	private boolean mIsConnected = false;
 
 	// Maps that keep track of Cordova callbacks.
-	private HashMap<String, CallbackContext> mRangingCallbackContexts =
-		new HashMap<String, CallbackContext>();
-	private HashMap<String, CallbackContext> mMonitoringCallbackContexts =
-		new HashMap<String, CallbackContext>();
+	private HashMap<String, CallbackContext> mRangingCallbackContexts = new HashMap<String, CallbackContext>();
+	private HashMap<String, CallbackContext> mMonitoringCallbackContexts = new HashMap<String, CallbackContext>();
 
 	/**
 	 * Plugin initialiser.
@@ -52,13 +48,15 @@ public class EstimoteBeacons extends CordovaPlugin
 		if (mBeaconManager == null) {
 			mBeaconManager = new BeaconManager(webView.getContext());
 		}
-
-		mBeaconManager.setErrorListener(new BeaconManager.ErrorListener() {
-			@Override
-			public void onError(Integer errorId) {
-				Log.e(LOGTAG, "BeaconManager error: " + errorId);
-			}
-		});
+		
+		if (mBeaconManager.hasBluetooth()){
+			mBeaconManager.setErrorListener(new BeaconManager.ErrorListener() {
+				@Override
+				public void onError(Integer errorId) {
+					Log.e(LOGTAG, "BeaconManager error: " + errorId);
+				}
+			});
+		}
 	}
 
 	/**
@@ -68,11 +66,13 @@ public class EstimoteBeacons extends CordovaPlugin
 	@Override
 	public void onReset() {
 		Log.i(LOGTAG, "onReset");
-
-		disconnectBeaconManager();
-
-		mRangingCallbackContexts = new HashMap<String, CallbackContext>();
-		mMonitoringCallbackContexts = new HashMap<String, CallbackContext>();
+		
+		if (mBeaconManager.hasBluetooth()){
+			disconnectBeaconManager();
+	
+			mRangingCallbackContexts = new HashMap<String, CallbackContext>();
+			mMonitoringCallbackContexts = new HashMap<String, CallbackContext>();
+		}
 	}
 
 	/**
@@ -80,7 +80,10 @@ public class EstimoteBeacons extends CordovaPlugin
 	 */
 	public void onDestroy() {
 		Log.i(LOGTAG, "onDestroy");
-		disconnectBeaconManager();
+		
+		if (mBeaconManager.hasBluetooth()){
+			disconnectBeaconManager();
+		}
 	}
 
 	/**
@@ -103,6 +106,10 @@ public class EstimoteBeacons extends CordovaPlugin
 		final CallbackContext callbackContext)
 		throws JSONException
 	{
+		if (!mBeaconManager.hasBluetooth()){
+			return false;
+		}
+		
 		if ("beacons_startRangingBeaconsInRegion".equals(action)) {
 			startRangingBeaconsInRegion(args, callbackContext);
 		}
@@ -130,6 +137,11 @@ public class EstimoteBeacons extends CordovaPlugin
 		throws JSONException
 	{
 		Log.i(LOGTAG, "startRangingBeaconsInRegion");
+		
+		if (!mBeaconManager.hasBluetooth()){
+			callbackContext.error("bluetooth not available");
+			return;
+		}
 
 		JSONObject json = cordovaArgs.getJSONObject(0);
 
@@ -171,7 +183,12 @@ public class EstimoteBeacons extends CordovaPlugin
 	 * Helper method.
 	 */
 	private void startRanging(Region region, CallbackContext callbackContext)
-	{
+	{	
+		if (!mBeaconManager.hasBluetooth()){
+			callbackContext.error("bluetooth not available");
+			return;
+		}
+		
 		try {
 			Log.i(LOGTAG, "startRanging");
 			mBeaconManager.startRanging(region);
@@ -191,6 +208,11 @@ public class EstimoteBeacons extends CordovaPlugin
 		throws JSONException
 	{
 		Log.i(LOGTAG, "stopRangingBeaconsInRegion");
+		
+		if (!mBeaconManager.hasBluetooth()){
+			callbackContext.error("bluetooth not available");
+			return;
+		}
 
 		JSONObject json = cordovaArgs.getJSONObject(0);
 
@@ -242,7 +264,12 @@ public class EstimoteBeacons extends CordovaPlugin
 		throws JSONException
 	{
 		Log.i(LOGTAG, "startMonitoringForRegion");
-
+		
+		if (!mBeaconManager.hasBluetooth()){
+			callbackContext.error("bluetooth not available");
+			return;
+		}
+		
 		JSONObject json = cordovaArgs.getJSONObject(0);
 
 		final Region region = createRegion(json);
@@ -284,6 +311,11 @@ public class EstimoteBeacons extends CordovaPlugin
 	 */
 	private void startMonitoring(Region region, CallbackContext callbackContext)
 	{
+		if (!mBeaconManager.hasBluetooth()){
+			callbackContext.error("bluetooth not available");
+			return;
+		}
+		
 		try {
 			Log.i(LOGTAG, "startMonitoring");
 			mBeaconManager.startMonitoring(region);
@@ -303,6 +335,11 @@ public class EstimoteBeacons extends CordovaPlugin
 		throws JSONException
 	{
 		Log.i(LOGTAG, "stopMonitoringForRegion");
+		
+		if (!mBeaconManager.hasBluetooth()){
+			callbackContext.error("bluetooth not available");
+			return;
+		}
 
 		JSONObject json = cordovaArgs.getJSONObject(0);
 
